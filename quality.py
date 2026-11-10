@@ -23,7 +23,6 @@ def checar_duplicidade(df, nome, chaves):
     else:
         print(f"âœ… {nome}: sem duplicidades")
 
-
 def conferir_carteira(nome_etapa, df):
     totais = df.agg(
         F.count("*").alias("linhas"),

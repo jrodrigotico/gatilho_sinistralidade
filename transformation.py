@@ -278,3 +278,11 @@ def preparar_custos_mensais(tabela, prefixo, coluna_valor):
             coluna_valor
         )
     )
+
+def unir_formatos_fatorial(df_formatos, df_fatorial):    
+    df_resultado = df_formatos.join(
+        df_fatorial,
+        on="chave",
+        how="left"
+    )
+    return df_resultado

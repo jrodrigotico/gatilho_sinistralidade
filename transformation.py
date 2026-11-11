@@ -285,3 +285,41 @@ def unir_formatos_fatorial(df_formatos, df_fatorial):
         how="left"
     )
     return df_resultado
+
+def preparar_exposto_percentuais(df_exposto):
+    df_agrupado = (
+        df_exposto
+        .withColumn(
+            "dt_comp",
+            F.trunc(
+                F.to_date(F.col("dt_comp"), "yyyy-MM-dd"),
+                "month",
+            ),
+        )
+        .groupBy("chave", "dt_comp")
+        .agg(
+            F.sum("prolabore_diferido").alias("valor_pro_labore"),
+            F.sum("agenciamento_diferido").alias("valor_agenciamento"),
+            F.sum("corretagem_diferido").alias("valor_corretagem"),
+            F.sum("nep_comp").alias("nep"),
+        )
+    )
+
+    def dividir_por_nep(valor):
+        return F.when(
+            F.col("nep").isNotNull() & (F.col("nep") != 0),
+            valor / F.col("nep"),
+        ).otherwise(F.lit(None).cast("double"))
+
+    return df_agrupado.select(
+        "chave",
+        "dt_comp",
+        dividir_por_nep(F.col("valor_pro_labore")).alias("pro_labore"),
+        dividir_por_nep(F.col("valor_agenciamento")).alias("agenciamento"),
+        dividir_por_nep(F.col("valor_corretagem")).alias("corretagem"),
+        dividir_por_nep(
+            F.col("valor_pro_labore")
+            + F.col("valor_agenciamento")
+            + F.col("valor_corretagem")
+        ).alias("comissao"),
+    )

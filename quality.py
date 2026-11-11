@@ -10,7 +10,7 @@ def checar_duplicidade(df, nome, chaves):
     )
     qtd = df_dup.count()
     if qtd > 0:
-        print(f"âš ï¸ [CARACTERE ILEGÍVEL] {nome}: {qtd} chaves duplicadas")
+        print(f"{nome}: {qtd} chaves duplicadas")
         (
             df.join(
                 df_dup.select(*chaves),
@@ -21,7 +21,7 @@ def checar_duplicidade(df, nome, chaves):
             .show(200, truncate=False)
         )
     else:
-        print(f"âœ… {nome}: sem duplicidades")
+        print(f"{nome}: sem duplicidades")
 
 def conferir_carteira(nome_etapa, df):
     totais = df.agg(

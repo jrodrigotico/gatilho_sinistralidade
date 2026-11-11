@@ -23,8 +23,7 @@ def adicionar_copias_ffc(df, coluna_data, df_mapa_ffc):
             ]
         )
     )
-    # Se a chave FFC jÃ¡ existir naquele mÃªs, preserva o registro
-    # existente e nÃ£o acrescenta uma segunda linha.
+
     chaves_meses_existentes = (
         df
         .select("CHAVE", coluna_data)

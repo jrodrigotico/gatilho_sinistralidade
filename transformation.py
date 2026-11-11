@@ -323,3 +323,80 @@ def preparar_exposto_percentuais(df_exposto):
             + F.col("valor_corretagem")
         ).alias("comissao"),
     )
+
+def preparar_emissao_carteira(df_emissao, df_formatos):
+    mapa_origens = (
+        df_formatos
+        .select(
+            F.trim(F.col("chave").cast("string")).alias("chave"),
+            F.upper(
+                F.trim(F.col("origem_gatilho"))
+            ).alias("origem_gatilho"),
+        )
+        .filter(F.length("chave") > 1)
+        .withColumn(
+            "apolice",
+            F.expr("substring(chave, 1, length(chave) - 1)"),
+        )
+        .select("apolice", "origem_gatilho")
+        .distinct()
+    )
+
+    # Uma apólice precisa ter uma única origem para este tratamento.
+    conflitos = (
+        mapa_origens
+        .groupBy("apolice")
+        .count()
+        .filter(F.col("count") > 1)
+    )
+
+    if conflitos.limit(1).count() > 0:
+        raise ValueError(
+            "Existem apólices com mais de uma origem no formatos. "
+            "Defina a regra para essas apólices antes de gerar a emissão."
+        )
+
+    origens_invalidas = mapa_origens.filter(
+        F.col("origem_gatilho").isNull()
+        | (F.col("origem_gatilho") == "")
+    )
+
+    if origens_invalidas.limit(1).count() > 0:
+        raise ValueError("Existem origens vazias no formatos.")
+
+    df_preparado = (
+        df_emissao
+        .withColumn(
+            "apolice",
+            F.trim(F.col("apolice").cast("string")),
+        )
+        .withColumn(
+            "dt_emissao",
+            F.trunc(F.to_date("dtcomp"), "month"),
+        )
+        # Mantém somente apólices presentes no formatos.
+        .join(mapa_origens, on="apolice", how="inner")
+        .withColumn(
+            "chave",
+            F.concat(
+                F.col("apolice"),
+                F.when(
+                    (F.col("origem_gatilho") != "CARTEIRA")
+                    & (
+                        F.col("dt_emissao")
+                        >= F.lit("2025-01-01").cast("date")
+                    ),
+                    F.lit("2"),
+                ).otherwise(F.lit("1")),
+            ),
+        )
+    )
+
+    return (
+        df_preparado
+        .groupBy("chave", "dt_emissao")
+        .agg(
+            F.sum("premio_liq_iof").alias("gwp"),
+            F.sum("rvne").alias("rvne"),
+        )
+    )

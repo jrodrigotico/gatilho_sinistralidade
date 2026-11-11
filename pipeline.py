@@ -24,7 +24,7 @@ def executar_formatos(spark):
     df_formatos = colunas_em_snake_case(df_formatos)
     df_formatos = valores_em_snake_case(df_formatos, ['tipo_apuracao_nep', 'tipo_regra_ibnr','tipo_regra_ulae'])
     df_formatos = df_formatos.filter(F.col("mostrar_gatilho") == "SIM") 
-    df_formatos.show(10, truncate=False)
+
     return df_formatos
 
 def executar_fatorial(spark):
@@ -36,7 +36,6 @@ def executar_fatorial(spark):
 
     df_fatorial = converter_para_spark(df_fatorial, spark)
     df_fatorial = colunas_em_snake_case(df_fatorial)
-    df_fatorial.show(10, truncate=False)
 
     return df_fatorial
 
@@ -44,5 +43,5 @@ def executar_formatos_fatorial(spark):
     df_formatos = executar_formatos(spark)
     df_fatorial = executar_fatorial(spark)
     df_resultado = unir_formatos_fatorial(df_formatos, df_fatorial)
-    df_resultado.show(10, truncate=False)
+
     return df_resultado

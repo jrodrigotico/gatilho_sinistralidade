@@ -1,4 +1,0 @@
-pyspark==4.0.0
-pandas
-openpyxl
-ipykernel

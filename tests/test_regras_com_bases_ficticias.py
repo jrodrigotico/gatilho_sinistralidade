@@ -5,7 +5,7 @@ from pyspark.sql import SparkSession
 
 import cargas_gatilho
 import transformation
-from bases_ficticias import (
+from tests.bases_ficticias import (
     APOLICE_CARTEIRA,
     APOLICES_ZEWS,
     CHAVE_QBE,

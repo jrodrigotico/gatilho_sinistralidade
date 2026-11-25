@@ -30,11 +30,12 @@ mercantil = Mercantil()
 # --------------------------- data_snapshot
 # mes_anterior = date.today() - relativedelta(months=1)
 # data_snapshot_input = mes_anterior.replace(day=20).strftime("%Y-%m-%d") # roda semmpre com a referencia dia 20 de cada mes considerando M-1
-data_snapshot_input = '2026-11-23'
+data_snapshot_input = globals().get("data_snapshot_input", "2026-11-23")
+publicar_tabela = globals().get("publicar_tabela", utils_gatilho.publicar_delta)
 
 # --------------------------- formatos
 origens_que_usam_zews = ["RFD", "GE", "OTHERS"]
-df_formatos_gatilho_ajustado = cargas_gatilho.carregar_formatos_gatilho(spark)
+df_formatos_gatilho_ajustado = cargas_gatilho.carregar_formatos_gatilho(spark, publicar_tabela)
 print("✅ Formatos gerado")
 
 df_rls_gatilho = cargas_gatilho.gerar_rls_gatilho(spark)
@@ -292,7 +293,7 @@ df_exposto = df_exposto.withColumn(
     )
 )
 
-df_premio_ganho_mercantil = (transformation.carregar_premio_ganho_mercantil(spark=spark))
+df_premio_ganho_mercantil = transformation.carregar_premio_ganho_mercantil(spark, publicar_tabela)
 utils_gatilho.checar_duplicidade(df_premio_ganho_mercantil,"df_premio_ganho_mercantil", ["chave_join", "ano_mes_join"])
 df_exposto, df_emissao_final = mercantil.aplicar_safras(
     df_exposto=df_exposto,
@@ -525,49 +526,44 @@ bases = {
 }
 
 for assunto, df in bases.items():
-    (
-        df.write
-        .format("delta")
-        .mode("overwrite")
-        .option("overwriteSchema", "true")
-        .saveAsTable(f"san_affinities.gatilho_{assunto}")
-    )
+    publicar_tabela(df, f"san_affinities.gatilho_{assunto}")
 
 # ----------------------------- inputs
 # sera usado para o caso de IBNR atuarial do GCB e Havan, esses valores vem fechados da area atuarial, portanto nao tem como eu fazer um calculo separado
-df_inputs = spark.sql(
-    """
-    CREATE or replace TABLE san_affinities.tb_ibnr_input (
-        agrupado STRING NOT NULL,
-        ramo STRING NOT NULL,
-        dt_referencia DATE NOT NULL,
-        valor_ibnr_input DOUBLE NOT NULL,
-        chave_input_ibnr STRING GENERATED ALWAYS AS (
-            CONCAT(
-                UPPER(TRIM(agrupado)),
-                '|',
-                LPAD(TRIM(ramo), 2, '0')
+if globals().get("publicar_ibnr", True):
+    df_inputs = spark.sql(
+        """
+        CREATE or replace TABLE san_affinities.tb_ibnr_input (
+            agrupado STRING NOT NULL,
+            ramo STRING NOT NULL,
+            dt_referencia DATE NOT NULL,
+            valor_ibnr_input DOUBLE NOT NULL,
+            chave_input_ibnr STRING GENERATED ALWAYS AS (
+                CONCAT(
+                    UPPER(TRIM(agrupado)),
+                    '|',
+                    LPAD(TRIM(ramo), 2, '0')
+                )
             )
         )
+        USING DELTA
+        """
     )
-    USING DELTA
-    """
-)
 
-# nome dos parceiros precisa estar sempre tudo maiusculo para conseguir dar match com formatos_gatilho_recarga
-spark.sql(
-    """
-    INSERT INTO san_affinities.tb_ibnr_input (
-        agrupado,
-        ramo,
-        dt_referencia,
-        valor_ibnr_input
+    # nome dos parceiros precisa estar sempre tudo maiusculo para conseguir dar match com formatos_gatilho_recarga
+    spark.sql(
+        """
+        INSERT INTO san_affinities.tb_ibnr_input (
+            agrupado,
+            ramo,
+            dt_referencia,
+            valor_ibnr_input
+        )
+        VALUES
+            ('GRUPO CASAS BAHIA - RENOVAÇÃO 2022', '71', DATE '2026-09-01', 1861877),
+            ('GRUPO CASAS BAHIA - RENOVAÇÃO 2022', '95', DATE '2026-09-01', 9538694)
+        """
     )
-    VALUES
-        ('GRUPO CASAS BAHIA - RENOVAÇÃO 2022', '71', DATE '2026-09-01', 1861877),
-        ('GRUPO CASAS BAHIA - RENOVAÇÃO 2022', '95', DATE '2026-09-01', 9538694)
-    """
-)
 
 print("✅ Finalizado !")
 

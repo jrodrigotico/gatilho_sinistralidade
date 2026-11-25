@@ -49,6 +49,9 @@ class CatalogoFicticio:
     def createDataFrame(self, dados, schema):
         return self.spark.createDataFrame(dados, schema)
 
+    def publicar_tabela(self, df, nome):
+        df.createOrReplaceTempView(self._nome_sql.sub(self._nome_view, nome))
+
     def sql(self, consulta):
         consulta = self._nome_sql.sub(self._nome_view, consulta)
         if (ctas := self._ctas.match(consulta)):

@@ -4,6 +4,16 @@ import re
 from pyspark.sql import functions as F
 
 
+def publicar_delta(df, tabela):
+    (
+        df.write
+        .format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .saveAsTable(tabela)
+    )
+
+
 def colunas_minusculas(df):
     return df.toDF(*[c.strip().lower() for c in df.columns])
 

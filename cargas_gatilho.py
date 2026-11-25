@@ -6,7 +6,7 @@ import transformation
 from pyspark.sql.types import (StructType, StructField, StringType, DoubleType)
 
 
-def carregar_formatos_gatilho (spark):
+def carregar_formatos_gatilho(spark, publicar_tabela=utils_gatilho.publicar_delta):
     origens_que_usam_zews = ["RFD", "GE", "OTHERS"]
     df_formatos_gatilho_ajustado = (carregar_formatos_gatilho_origem(spark).withColumn("VERSAO", F.col("VERSAO").cast("int")))
     colunas_percentuais = ["PERCENT_PREMIO_IBNR", "PERCENT_SINISTRO_IBNR", "PERCENT_ULAE", "SINISTRALIDADE_PLANO"]
@@ -145,13 +145,7 @@ def carregar_formatos_gatilho (spark):
         )
     )
 
-    (
-        df_formatos_gatilho_ajustado.write
-        .format("delta")
-        .mode("overwrite")
-        .option("overwriteSchema", "true")
-        .saveAsTable("san_affinities.formatos_gatilho_ajustado")
-    )
+    publicar_tabela(df_formatos_gatilho_ajustado, "san_affinities.formatos_gatilho_ajustado")
 
     return df_formatos_gatilho_ajustado
 

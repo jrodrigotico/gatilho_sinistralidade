@@ -3,6 +3,7 @@ import unicodedata
 import re
 from pyspark.sql import functions as F
 from pyspark.sql import Window
+from utils_gatilho import publicar_delta
 
 def juntar_por_chave_mes(
     df_carteira,
@@ -224,7 +225,7 @@ def juntar_por_chave_mes(
         )
     )
 
-def carregar_premio_ganho_mercantil(spark):
+def carregar_premio_ganho_mercantil(spark, publicar_tabela=publicar_delta):
     chave_mercantil_input = "667791861252"
 
     valores = [
@@ -256,13 +257,7 @@ def carregar_premio_ganho_mercantil(spark):
 
     tabela = "san_affinities.tb_premio_ganho_mercantil_gatilho"
 
-    (
-        df.write
-        .format("delta")
-        .mode("overwrite")
-        .option("overwriteSchema", "true")
-        .saveAsTable(tabela)
-    )
+    publicar_tabela(df, tabela)
 
     return spark.table(tabela)
 

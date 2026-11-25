@@ -7,6 +7,7 @@ Pipeline em PySpark que consolida bases de emissão, exposto e sinistro para o a
 | Arquivo ou pasta | Responsabilidade |
 | --- | --- |
 | [`run_gatilho.py`](run_gatilho.py) | Orquestra a carga, os ajustes por parceiro e a publicação das bases finais. |
+| [`rodar_local.py`](rodar_local.py) | Executa o pipeline com os CSVs fictícios e exporta os resultados locais. |
 | [`cargas_gatilho.py`](cargas_gatilho.py) | Carrega e valida dados de carteira, ZEWS, formatos e fontes auxiliares. |
 | [`transformation.py`](transformation.py) | Contém junções por chave e mês, ajustes de prêmio e custos e regras de período e renovação. |
 | [`utils_gatilho.py`](utils_gatilho.py) | Reúne funções de normalização de texto, datas e colunas, além de verificações de duplicidade. |
@@ -25,21 +26,30 @@ Pipeline em PySpark que consolida bases de emissão, exposto e sinistro para o a
 
 Depois de carregar e validar o prêmio ganho, `run_gatilho.py` chama `Mercantil.aplicar_safras`. O método cria a Safra 01 no exposto, ajusta o NEP da Safra 02 no período de sobreposição e reconstrói a emissão das duas safras a partir de junho de 2024, usando o NEP final como GWP.
 
-## Ambiente e execução
+## Execução no Databricks
 
 O script principal depende de uma sessão `spark` já disponível, suporte a Delta, PySpark, pandas e python-dateutil. A execução precisa de acesso às tabelas de origem e permissão de escrita nos destinos. As bases finais são gravadas em modo `overwrite`.
 
-## Testes locais com bases fictícias
+## Execução local com bases fictícias
 
 Os 22 CSVs já estão disponíveis em [`files/`](files/). Cada arquivo de dados usa o nome da tabela de origem. Por exemplo, [`tb_valor_qbe_recarga.csv`](files/tb_valor_qbe_recarga.csv) representa `san_affinities.tb_valor_qbe_recarga`. O conjunto inclui os snapshots de carteira, as fontes ZEWS de GE, RFD e OTHERS, os formatos, os fatores de IBNR e as bases auxiliares de Farol, assistência, outros custos, QBE e ULAE Zurich.
 
 1. Abra o CSV que deseja testar no VS Code e edite as linhas. Preserve o cabeçalho, os zeros à esquerda nas chaves e apólices e o formato `AAAA-MM-DD` nas datas. O arquivo [`schemas.csv`](files/schemas.csv) define os tipos usados pelo Spark.
-2. Mantenha as chaves e competências consistentes entre as bases que devem se cruzar. O teste das cargas usa o snapshot `2026-11-23`. Se alterar essa data nos CSVs, ajuste também `DATA_SNAPSHOT` em [`tests/bases_ficticias.py`](tests/bases_ficticias.py).
-3. Na raiz do repositório, execute o comando abaixo em um ambiente Python com PySpark, pandas e Java disponível.
+2. Mantenha as chaves e competências consistentes entre as bases que devem se cruzar. O pipeline local e o teste das cargas usam o snapshot `2026-11-23`. Se alterar essa data nos CSVs, ajuste também `DATA_SNAPSHOT` em [`tests/bases_ficticias.py`](tests/bases_ficticias.py).
+3. Com Python e Java disponíveis, rode na raiz do repositório. A instalação das dependências é necessária na primeira execução do ambiente.
 
    ```powershell
-   python -m unittest discover -s tests -v
+   python -m pip install pyspark==4.0.0 pandas python-dateutil
+   python -X utf8 rodar_local.py
    ```
 
-A bateria verifica as cargas de origem e as regras de Mercantil, Havan e Sky. O teste das cargas usa views temporárias do Spark local, sem acesso ao Databricks. A execução completa de `run_gatilho.py` e as gravações Delta ficam fora dessa cobertura.
+O Spark lê os CSVs diretamente e usa views temporárias durante o processamento. Ao terminar, `rodar_local.py` grava `gatilho_emissao.csv`, `gatilho_exposto.csv` e `gatilho_sinistro.csv` em `files/saida_local/`. Uma nova execução sobrescreve esses arquivos. A publicação em Delta e a criação de `tb_ibnr_input` são etapas da execução no Databricks.
+
+## Testes automatizados
+
+No mesmo ambiente, rode a bateria que verifica as cargas de origem e as regras de Mercantil, Havan e Sky:
+
+```powershell
+python -m unittest discover -s tests -v
+```
 

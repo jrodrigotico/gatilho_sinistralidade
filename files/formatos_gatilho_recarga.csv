@@ -1,0 +1,8 @@
+chave,start,versao,mostrar_gatilho,nome_produto_comercial,agrupado,acesso,ramo,origem_gatilho,grupo_geral,tipo_regra_ulae,percent_premio_ibnr,percent_sinistro_ibnr,percent_ulae,sinistralidade_plano
+000000000011,00000000001,1,SIM,Produto fictício,ZURICH,teste,90,CARTEIRA,ZURICH,CALCULO_ZURICH,"0,05",,"0,10","0,50"
+000000000022,00000000002,2,SIM,Produto fictício,GE,teste,90,GE,GE,SEM_ULAE,"0,05",,"0,10","0,50"
+000000000032,00000000003,2,SIM,Produto fictício,RFD,teste,90,RFD,RFD,SEM_ULAE,"0,05",,"0,10","0,50"
+000000000042,00000000004,2,SIM,Produto fictício,OTHERS,teste,90,OTHERS,OTHERS,SEM_ULAE,"0,05",,"0,10","0,50"
+000000000051,00000000005,1,SIM,Produto fictício,QBE,teste,90,CARTEIRA,QBE,SEM_ULAE,"0,05",,"0,10","0,50"
+667791861251,66779186125,1,SIM,Produto fictício,MERCANTIL,teste,90,CARTEIRA,MERCANTIL,SEM_ULAE,"0,05",,"0,10","0,50"
+667791861252,66779186125,2,SIM,Produto fictício,MERCANTIL,teste,90,CARTEIRA,MERCANTIL,SEM_ULAE,"0,05",,"0,10","0,50"

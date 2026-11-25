@@ -223,4 +223,5 @@ __marimo__/
 
 # *.xlsx
 *.csv
+!/files/*.csv
 *.ipynb

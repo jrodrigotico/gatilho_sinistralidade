@@ -57,7 +57,6 @@ def executar_rls(df):
     checar_duplicidade(df_resultado, "duplicidade da coluna 'chave' no RLS", ["chave"])
     return df_resultado
 
-
 def executar_exposto_percentuais(spark):
     print("Iniciando pipeline de percentuais do exposto...")
 
